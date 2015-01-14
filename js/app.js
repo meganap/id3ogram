@@ -1,173 +1,203 @@
-var app = angular.module('id3ogram', [])
-.controller('id3ogramController', ['$scope', '$http', function($scope, $http) {
-	// app vars
-    $scope.info = '';
-	$scope.chromosomes = [];
-	$scope.currentChromosome = null;
-    $scope.dataByCh = {};
+var app = angular.module('id3ogramViewer', []);
 
-    // static vis vars
-    $scope.rainbow = new Rainbow();
+function id3ogramController($scope) {
 
-    // current vis vars
-    $scope.vis = {};
-    $scope.vis.aspect;
-    $scope.vis.container;
-    $scope.vis.q = [];
-    $scope.vis.p = [];
-    $scope.vis.qmin = Infinity;
-    $scope.vis.qmax = -Infinity;
-    $scope.vis.pmin = Infinity;
-    $scope.vis.pmax = -Infinity;
-    $scope.vis.minDensity = Infinity;
-    $scope.vis.minDensity = -Infinity;
-    $scope.vis.svg;
-    $scope.vis.pArm = []
-    $scope.vis.qArm = []
-    $scope.vis.x;
+}
 
-	$http.get('http://api.solvebio.com/v1/datasets/ISCN/1.0.1-2015-01-05/Ideograms/data?access_token=98e8f6ba570311e4bab59f6dc3060e21').
-	  success(function(data, status, headers, config) {
-	    // this callback will be called asynchronously
-	    // when the response is available
-		  $scope.setData(data.results);
-		  $scope.info += 'dataset:' + data.dataset;
-		  $scope.info += '  ID:' + data.dataset_id;
-		  $scope.info += '  Build:' + data.genome_build;
-	  }).
-	  error(function(data, status, headers, config) {
-	    // called asynchronously if an error occurs
-	    // or server returns response with an error status.
-		  $scope.info = 'Failed to load data from SolveBio';
-	  });
+app.directive('id3ogram', ['$http', '$window', function($http,$window) {
+    return {
+        scope: {},
+        restrict: 'AE',
+        replace: 'true',
+        templateUrl: 'id3ogramTemplate.html',
+        link: function($scope, div, attrs) {
+        	// app vars
+            var info = '';
+            var chromosomes = [];
+            var currentChromosome = null;
+            var dataByCh = {};
 
-	  $scope.setData = function(data) {
-          // separate data by chromosomes
-		  data.forEach(function(d){
-			  var ch = parseInt(d.genomic_coordinates.chromosome);
+            // static vis vars
+            var rainbow = new Rainbow();
+            var w = angular.element($window);
 
-              if(!(ch in $scope.dataByCh))
-                  $scope.dataByCh[ch] = [];
+            // current vis vars
+            var vis = {};
+            var aspect;
+            var container;
+            var q = [];
+            var p = [];
+            var qmin = Infinity;
+            var qmax = -Infinity;
+            var pmin = Infinity;
+            var pmax = -Infinity;
+            var minDensity = Infinity;
+            var minDensity = -Infinity;
+            var svg;
+            var pArm = []
+            var qArm = []
+            var x;
 
-              $scope.dataByCh[ch].push(d);
-          });
+              $scope.init = function() {
+                  $scope.chromosomes = Object.keys(dataByCh);
+                  $scope.currentChromosome = $scope.chromosomes[0]
 
-          $scope.init();
-	  };
+                  rainbow.setSpectrum('#dddddd','#000000');
 
-      $scope.init = function() {
-          $scope.chromosomes = Object.keys($scope.dataByCh);
-		  $scope.currentChromosome = $scope.chromosomes[0];
+              	  div = d3.select("#vis").append("div")
+              		.attr("class", "tooltip")
+              		.style("opacity", 0);
 
-          $scope.rainbow.setSpectrum('#dddddd','#000000');
+                  svg = d3.select("#vis").append("svg")
+                      .attr("width", document.getElementById('vis').offsetWidth)
+                      .attr("height", 60)
+                      .attr("perserveAspectRatio", "xMinYMid");
 
-      	  div = d3.select("#vis").append("div")
-      		.attr("class", "tooltip")
-      		.style("opacity", 0);
+                  aspect = svg.width / svg.height;
+                  container = document.getElementById('vis');
 
-          $scope.vis.svg = d3.select("#vis").append("svg")
-              .attr("width", document.getElementById('vis').offsetWidth)
-              .attr("height", 60)
-              .attr("perserveAspectRatio", "xMinYMid");
+                  // $(window).on("resize", function() {
+                  //     var targetWidth = container.width();
+                  //     svg.attr("width", targetWidth);
+                  //     svg.attr("height", Math.round(targetWidth / aspect));
+                  // }).trigger("resize");
 
-          $scope.vis.aspect = $scope.vis.svg.width / $scope.vis.svg.height;
-          $scope.vis.container = document.getElementById('vis');
+                  $scope.resetCurrentVis();
+              }
 
-          // $(window).on("resize", function() {
-          //     var targetWidth = $scope.vis.container.width();
-          //     $scope.vis.svg.attr("width", targetWidth);
-          //     $scope.vis.svg.attr("height", Math.round(targetWidth / $scope.vis.aspect));
-          // }).trigger("resize");
+              $scope.resetCurrentVis = function() {
+                  var currentData = dataByCh[$scope.currentChromosome]
 
-          $scope.resetCurrentVis();
-      }
+                  // reset vars
+                  vis.q = [];
+                  vis.p = [];
 
-      $scope.resetCurrentVis = function() {
-          var currentData = $scope.dataByCh[$scope.currentChromosome]
+                  currentData.forEach(function(d) {
+                      vis[d.arm].push(d);
+                  });
 
-          // reset vars
-          $scope.vis.q = [];
-          $scope.vis.p = [];
+                  qmin = d3.min(vis.q, function(d) { return d.genomic_coordinates.start });
+                  qmax = d3.max(vis.q, function(d) { return d.genomic_coordinates.stop });
+                  pmin = d3.min(vis.p, function(d) { return d.genomic_coordinates.start });
+                  pmax = d3.max(vis.p, function(d) { return d.genomic_coordinates.stop });
 
-          currentData.forEach(function(d) {
-              $scope.vis[d.arm].push(d);
-          });
+                  x = d3.scale.linear()
+                    .rangeRound([0, document.getElementById('vis').offsetWidth]);
+                  x.domain([0, qmax]);
 
-          $scope.vis.qmin = d3.min($scope.vis.q, function(d) { return d.genomic_coordinates.start });
-          $scope.vis.qmax = d3.max($scope.vis.q, function(d) { return d.genomic_coordinates.stop });
-          $scope.vis.pmin = d3.min($scope.vis.p, function(d) { return d.genomic_coordinates.start });
-          $scope.vis.pmax = d3.max($scope.vis.p, function(d) { return d.genomic_coordinates.stop });
+                  pArm = []
+                  pArm.push({start: 0, end: (pmax + (qmin-pmax)/2) })
 
-          $scope.vis.x = d3.scale.linear()
-            .rangeRound([0, document.getElementById('vis').offsetWidth]);
-          $scope.vis.x.domain([0, $scope.vis.qmax]);
+                  qArm = []
+                  qArm.push({start: (pmax + (qmin-pmax)/2), end: qmax })
 
-          $scope.vis.pArm = []
-          $scope.vis.pArm.push({start: 0, end: ($scope.vis.pmax + ($scope.vis.qmin-$scope.vis.pmax)/2) })
+                  minDensity = d3.min(currentData, function(d) { return d.density });
+                  maxDensity = d3.max(currentData, function(d) { return d.density });
 
-          $scope.vis.qArm = []
-          $scope.vis.qArm.push({start: ($scope.vis.pmax + ($scope.vis.qmin-$scope.vis.pmax)/2), end: $scope.vis.qmax })
+                  rainbow.setNumberRange(minDensity, maxDensity);
 
-          $scope.vis.minDensity = d3.min(currentData, function(d) { return d.density });
-          $scope.vis.maxDensity = d3.max(currentData, function(d) { return d.density });
+                  svg.selectAll("*").remove();
+                  $scope.drawArm('p', pArm, vis.p);
+                  $scope.drawArm('q', qArm, vis.q);
+              };
 
-          $scope.rainbow.setNumberRange($scope.vis.minDensity, $scope.vis.maxDensity);
+              $scope.drawArm = function(armID, armData, armBandData) {
+                  var arm = svg.selectAll("."+armID+"Arm")
+                      .data(armData)
+                  .enter().append("g")
+                      .attr("class", armID+"Arm");
 
-          $scope.vis.svg.selectAll("*").remove();
-          $scope.drawArm('p', $scope.vis.pArm, $scope.vis.p);
-          $scope.drawArm('q', $scope.vis.qArm, $scope.vis.q);
-      };
+                  arm.append("rect")
+                      .attr("rx", 5)
+                      .attr("ry", 5)
+                      .attr("width", function(d) { return x(d.end-d.start); })
+                      .attr("height", 50)
+                      .attr("transform", function(d) { return "translate(" + x(d.start) + ",0)" })
+                      .attr("fill", "#fafafa");
 
-      $scope.drawArm = function(armID, armData, armBandData) {
-          var arm = $scope.vis.svg.selectAll("."+armID+"Arm")
-              .data(armData)
-          .enter().append("g")
-              .attr("class", armID+"Arm");
+                  var armBands = arm.selectAll(".armBand")
+                      .data(armBandData);
 
-          arm.append("rect")
-              .attr("rx", 5)
-              .attr("ry", 5)
-              .attr("width", function(d) { return $scope.vis.x(d.end-d.start); })
-              .attr("height", 50)
-              .attr("transform", function(d) { return "translate(" + $scope.vis.x(d.start) + ",0)" })
-              .attr("fill", "#fafafa");
+                  armBands.enter().append("rect")
+                      .attr("class", "armBand")
+                      .attr("width", function(d) { return x(d.genomic_coordinates.stop-d.genomic_coordinates.start); })
+                      .attr("height", 48)
+                      .attr("transform", function(d) { return "translate(" + x(d.genomic_coordinates.start) + ",1)" })
+                      .style("fill", function(d) { return "#"+rainbow.colorAt(d.density); })
+            	      .on("mouseover", function(d) {
+                          this.style["fill"] = "#3ca6dc"
+                          div.transition()
+            	              .duration(200)
+            	              .style("opacity", .9);
+            	          div .html(d.band_label+"<br/>|")
+            	              .style("left", (svg[0][0].offsetLeft + x(d.genomic_coordinates.start+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
+            	              .style("top", svg[0][0].offsetTop-30 + "px");
+            	      })
+            	      .on("mouseout", function(d) {
+                          this.style["fill"] = "#" + rainbow.colorAt(d.density);
+            	          div.transition()
+            	              .duration(500)
+            	              .style("opacity", 0)
+                          div .html("")
+                              .style("left", (0) + "px")
+                              .style("top", (0) + "px");
+            	      });
 
-          var armBands = arm.selectAll(".armBand")
-              .data(armBandData);
+                  arm.append("rect")
+                      .attr("rx", 5)
+                      .attr("ry", 5)
+                      .attr("width", function(d) { return x(d.end-d.start); })
+                      .attr("height", 50)
+                      .attr("transform", function(d) { return "translate(" + x(d.start) + ",0)" })
+                      .attr("stroke-width", 1)
+                      .attr("stroke", "#111111")
+                      .attr("fill", "none");
+              }
 
-          armBands.enter().append("rect")
-              .attr("class", "armBand")
-              .attr("width", function(d) { return $scope.vis.x(d.genomic_coordinates.stop-d.genomic_coordinates.start); })
-              .attr("height", 48)
-              .attr("transform", function(d) { return "translate(" + $scope.vis.x(d.genomic_coordinates.start) + ",1)" })
-              .style("fill", function(d) { return "#"+$scope.rainbow.colorAt(d.density); })
-    	      .on("mouseover", function(d) {
-                  this.style["fill"] = "#3ca6dc"
-                  div.transition()
-    	              .duration(200)
-    	              .style("opacity", .9);
-    	          div .html(d.band_label+"<br/>|")
-    	              .style("left", ($scope.vis.svg[0][0].offsetLeft + $scope.vis.x(d.genomic_coordinates.start+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
-    	              .style("top", $scope.vis.svg[0][0].offsetTop-30 + "px");
-    	      })
-    	      .on("mouseout", function(d) {
-                  this.style["fill"] = "#" + $scope.rainbow.colorAt(d.density);
-    	          div.transition()
-    	              .duration(500)
-    	              .style("opacity", 0)
-                  div .html("")
-                      .style("left", (0) + "px")
-                      .style("top", (0) + "px");
-    	      });
+              // getWindowDimensions = function () {
+              //     return {
+              //         'h': w.getOffsetHeight,
+              //         'w': w.getOffsetWidth
+              //     };
+              // };
+              // $watch(getWindowDimensions, function (newValue, oldValue) {
+              //     windowHeight = newValue.h;
+              //     windowWidth = newValue.w;
+              //
+              //     console.log('do resize stuff here')
+              //
+              // }, true);
+              //
+              // $window.bind('resize', function () {
+              //     $apply();
+              // });
 
-          arm.append("rect")
-              .attr("rx", 5)
-              .attr("ry", 5)
-              .attr("width", function(d) { return $scope.vis.x(d.end-d.start); })
-              .attr("height", 50)
-              .attr("transform", function(d) { return "translate(" + $scope.vis.x(d.start) + ",0)" })
-              .attr("stroke-width", 1)
-              .attr("stroke", "#111111")
-              .attr("fill", "none");
-      }
+              $http.get(attrs.dataurl).
+          	  success(function(data, status, headers, config) {
+          	    // this callback will be called asynchronously
+          	    // when the response is available
+          		  info += 'dataset:' + data.dataset;
+          		  info += '  ID:' + data.dataset_id;
+          		  info += '  Build:' + data.genome_build;
+
+                    data = data.results
+
+                    // separate data by chromosomes
+            		  data.forEach(function(d){
+            			  var ch = parseInt(d.genomic_coordinates.chromosome);
+
+                          if(!(ch in dataByCh))
+                              dataByCh[ch] = [];
+
+                          dataByCh[ch].push(d);
+                    });
+                    $scope.init();
+          	  }).
+          	  error(function(data, status, headers, config) {
+          	    // called asynchronously if an error occurs
+          	    // or server returns response with an error status.
+          		  info = 'Failed to load data from SolveBio';
+          	  });
+        }
+    };
 }]);

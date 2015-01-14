@@ -7,7 +7,7 @@
  */
 -->
 <!DOCTYPE html>
-<html lang="en" ng-app="id3ogram">
+<html lang="en" ng-app="id3ogramViewer">
 <head>
 <meta charset="utf-8">
 <title>id3ogram</title>
@@ -19,22 +19,13 @@
 <script type="text/javascript" src="js/app.js"></script>
 </head>
 <body>
-	<div ng-controller="id3ogramController">
+	<div>
 		<div class="wrapper">
 			<div class="header">
 				<h1>i<strong>d3</strong>ogram</h1>
 			</div>
-			<div class="right">
-				<label>Select Chromosome: </label>
-				<select ng-model="currentChromosome" ng-options="chromosome for chromosome in chromosomes" ng-change="resetCurrentVis()">
-				</select>
-			</div>
-			<h2>Chromosome {{ currentChromosome }}</h2>
-			<div id="vis">
-			</div>
-			<div id="info">
-				{{ info }}
-			</div>
+			<id3ogram dataUrl="http://api.solvebio.com/v1/datasets/ISCN/1.0.1-2015-01-05/Ideograms/data?access_token=98e8f6ba570311e4bab59f6dc3060e21">
+			</id3ogram>
 		</div>
 	</div>
 </body>

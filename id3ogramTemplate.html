@@ -1,0 +1,13 @@
+<div>
+    <div class="right">
+    	<label>Select Chromosome: </label>
+    	<select ng-model="currentChromosome" ng-options="chromosome for chromosome in chromosomes" ng-change="resetCurrentVis()">
+    	</select>
+    </div>
+    <h2>Chromosome {{ currentChromosome }}</h2>
+    <div id="vis">
+    </div>
+    <div id="info">
+    	{{ info }}
+    </div>
+</div>
