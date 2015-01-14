@@ -12,9 +12,9 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
         templateUrl: 'id3ogramTemplate.html',
         link: function($scope, div, attrs) {
         	// app vars
-            var info = '';
-            var chromosomes = [];
-            var currentChromosome = null;
+            $scope.info = '';
+            $scope.chromosomes = [];
+            $scope.currentChromosome = null;
             var dataByCh = {};
 
             // static vis vars
@@ -34,6 +34,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             var minDensity = Infinity;
             var minDensity = -Infinity;
             var svg;
+            var svgChart;
             var pArm = []
             var qArm = []
             var x;
@@ -50,17 +51,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
 
                   svg = d3.select("#vis").append("svg")
                       .attr("width", document.getElementById('vis').offsetWidth)
-                      .attr("height", 60)
-                      .attr("perserveAspectRatio", "xMinYMid");
-
-                  aspect = svg.width / svg.height;
-                  container = document.getElementById('vis');
-
-                  // $(window).on("resize", function() {
-                  //     var targetWidth = container.width();
-                  //     svg.attr("width", targetWidth);
-                  //     svg.attr("height", Math.round(targetWidth / aspect));
-                  // }).trigger("resize");
+                    .attr("height", 60);
 
                   $scope.resetCurrentVis();
               }
@@ -154,31 +145,17 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                       .attr("fill", "none");
               }
 
-              // getWindowDimensions = function () {
-              //     return {
-              //         'h': w.getOffsetHeight,
-              //         'w': w.getOffsetWidth
-              //     };
-              // };
-              // $watch(getWindowDimensions, function (newValue, oldValue) {
-              //     windowHeight = newValue.h;
-              //     windowWidth = newValue.w;
-              //
-              //     console.log('do resize stuff here')
-              //
-              // }, true);
-              //
-              // $window.bind('resize', function () {
-              //     $apply();
-              // });
+              w.bind('resize', function () {
+                  $scope.resetCurrentVis();
+              });
 
               $http.get(attrs.dataurl).
           	  success(function(data, status, headers, config) {
           	    // this callback will be called asynchronously
           	    // when the response is available
-          		  info += 'dataset:' + data.dataset;
-          		  info += '  ID:' + data.dataset_id;
-          		  info += '  Build:' + data.genome_build;
+          		  $scope.info += 'dataset:' + data.dataset;
+          		  $scope.info += '  ID:' + data.dataset_id;
+          		  $scope.info += '  Build:' + data.genome_build;
 
                     data = data.results
 
@@ -196,7 +173,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
           	  error(function(data, status, headers, config) {
           	    // called asynchronously if an error occurs
           	    // or server returns response with an error status.
-          		  info = 'Failed to load data from SolveBio';
+          		  $scope.info = 'Failed to load data from SolveBio';
           	  });
         }
     };
