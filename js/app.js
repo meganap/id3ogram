@@ -20,6 +20,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             // static vis vars
             var rainbow = new Rainbow();
             var w = angular.element($window);
+            var isFirefox = typeof InstallTrigger !== 'undefined';
 
             // current vis vars
             var vis = {};
@@ -50,8 +51,8 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
               		.style("opacity", 0);
 
                   svg = d3.select("#vis").append("svg")
-                      .attr("width", document.getElementById('vis').offsetWidth)
-                    .attr("height", 60);
+                     .attr("width", document.getElementById('vis').offsetWidth)
+                     .attr("height", 60);
 
                   $scope.resetCurrentVis();
               }
@@ -116,22 +117,26 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                       .attr("transform", function(d) { return "translate(" + x(d.genomic_coordinates.start) + ",1)" })
                       .style("fill", function(d) { return "#"+rainbow.colorAt(d.density); })
             	      .on("mouseover", function(d) {
+                          var leftOffset = svg[0][0].offsetLeft
+                          var topOffset = svg[0][0].offsetTop
+                          if(isFirefox)
+                          {
+                              leftOffset = parseInt(svg[0][0].getBoundingClientRect().x+1)
+                              topOffset = parseInt(svg[0][0].getBoundingClientRect().y)
+                          }
                           this.style["fill"] = "#3ca6dc"
                           div.transition()
             	              .duration(200)
             	              .style("opacity", .9);
             	          div .html(d.band_label+"<br/>|")
-            	              .style("left", (svg[0][0].offsetLeft + x(d.genomic_coordinates.start+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
-            	              .style("top", svg[0][0].offsetTop-30 + "px");
+            	              .style("left", (leftOffset + x(d.genomic_coordinates.start+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
+            	              .style("top", (topOffset-30) + "px");
             	      })
             	      .on("mouseout", function(d) {
                           this.style["fill"] = "#" + rainbow.colorAt(d.density);
             	          div.transition()
             	              .duration(500)
-            	              .style("opacity", 0)
-                          div .html("")
-                              .style("left", (0) + "px")
-                              .style("top", (0) + "px");
+                              .style("opacity", 0);
             	      });
 
                   arm.append("rect")
