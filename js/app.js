@@ -36,6 +36,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             // data for the background/outline arms
             var pArm = [];
             var qArm = [];
+            var centromere = [];
             var x; // x axis
 
             // init method to set up the data structures, and vis variables
@@ -47,7 +48,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 // link the header to the current chromosome view
                 $scope.currentChromosome = $scope.chromosomes[0];
 
-                rainbow.setSpectrum('#dddddd','#000000');
+                rainbow.setSpectrum('#f3f3f3','#555555');
 
                 // tooltip that holds the band label when it is visible
               	div = d3.select("#vis").append("div")
@@ -56,7 +57,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                     .style("color","#3ca6dc");
 
                 svg = d3.select("#vis").append("svg")
-                    .attr("height", 60);
+                    .attr("height", 40);
 
                 $scope.getBandData();
             }
@@ -64,14 +65,15 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             $scope.getBandData = function() {
                 data = {
                     'fields': [
-                     "arm",
-                     "band_label",
-                     "genomic_coordinates.start",
-                     "genomic_coordinates.stop",
-                     "density"
+                        "arm",
+                        "band_label",
+                        "genomic_coordinates.start",
+                        "genomic_coordinates.stop",
+                        "density"
                     ],
                     'filters': [{and: [
-                     ["genomic_coordinates.chromosome", $scope.currentChromosome]
+                        ["genomic_coordinates.chromosome", $scope.currentChromosome],
+                        ["band_level", "550"]
                     ]}]
                 }
 
@@ -141,15 +143,6 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 .enter().append("g")
                     .attr("class", armID+"Arm");
 
-                // draws the background lightest gray arm rect
-                arm.append("rect")
-                    .attr("rx", 5)
-                    .attr("ry", 5)
-                    .attr("width", function(d) { return x(d.end-d.start); })
-                    .attr("height", 50)
-                    .attr("transform", function(d) { return "translate(" + x(d.start) + ",0)" })
-                    .attr("fill", "#fafafa");
-
                 var armBands = arm.selectAll(".armBand")
                     .data(armBandData);
 
@@ -157,7 +150,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 armBands.enter().append("rect")
                     .attr("class", "armBand")
                     .attr("width", function(d) { return x(d.genomic_coordinates.stop-d.genomic_coordinates.start); })
-                    .attr("height", 48)
+                    .attr("height", 28)
                     .attr("transform", function(d) { return "translate(" + x(d.genomic_coordinates.start) + ",1)" })
                     .style("fill", function(d) { return "#"+rainbow.colorAt(d.density); })
             	        .on("mouseover", function(d) {
@@ -183,14 +176,21 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                                 .style("opacity", 0);
             	        });
 
+                // //draws the background lightest gray arm rect
+                // arm.append("rect")
+                //     .attr("width", function(d) { return x(d.end-d.start); })
+                //     .attr("height", 30)
+                //     .attr("transform", function(d) { return "translate(" + (x(d.start) + 1) + ",0)" })
+                //     .attr("fill", "#fafafa");
+
                 // draws the outline rect
                 arm.append("rect")
-                    .attr("rx", 5)
-                    .attr("ry", 5)
-                    .attr("width", function(d) { return x(d.end-d.start); })
-                    .attr("height", 50)
-                    .attr("transform", function(d) { return "translate(" + x(d.start) + ",0)" })
-                    .attr("stroke-width", 1)
+                    .attr("rx", 10)
+                    .attr("ry", 10)
+                    .attr("width", function(d) { return (x(d.end-d.start) - 2); })
+                    .attr("height", 30)
+                    .attr("transform", function(d) { return "translate(" + (x(d.start) + 1) + ",0)" })
+                    .attr("stroke-width", 2)
                     .attr("stroke", "#111111")
                     .attr("fill", "none");
             }
