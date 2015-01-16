@@ -143,16 +143,16 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
 
             // drawArm method uses d3 to do the actual drawing
             $scope.drawArm = function (armID, armData, armBandData, centromereOffset) {
-                var arm = svg.selectAll("."+armID+"Arm")
+                var arm = svg.selectAll("." + armID + "Arm")
                     .data(armData)
                 .enter().append("g")
-                    .attr("class", armID+"Arm");
+                    .attr("class", armID + "Arm");
 
                 // draws the background rect
                 arm.append("rect")
-                    .attr("width", function (d) { return (x(d.end-d.start) - 2); })
+                    .attr("width", function (d) { return (x(d.end - d.start) - 2); })
                     .attr("height", 30)
-                    .attr("transform", function (d) { return "translate(" + (x(d.start+centromereOffset) + 1) + ",1)" })
+                    .attr("transform", function (d) { return "translate(" + (x(d.start + centromereOffset) + 1) + ",1)" })
                     .attr("fill", "#f3f3f3");
 
                 var armBands = arm.selectAll(".armBand")
@@ -161,25 +161,25 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
                 // draws each band
                 armBands.enter().append("rect")
                     .attr("class", "armBand")
-                    .attr("width", function (d) { return x(d.genomic_coordinates.stop-d.genomic_coordinates.start); })
+                    .attr("width", function (d) { return x(d.genomic_coordinates.stop - d.genomic_coordinates.start); })
                     .attr("height", 28)
-                    .attr("transform", function (d) { return "translate(" + x(d.genomic_coordinates.start+centromereOffset) + ",2)" })
-                    .style("fill", function (d) { return "#"+rainbow.colorAt(d.density); })
+                    .attr("transform", function (d) { return "translate(" + x(d.genomic_coordinates.start + centromereOffset) + ",2)" })
+                    .style("fill", function (d) { return "#" + rainbow.colorAt(d.density); })
         	        .on("mouseover", function (d) {
                         var leftOffset = svg[0][0].offsetLeft;
                         var topOffset = svg[0][0].offsetTop;
                         if(isFirefox) // firefox has an issue with the above declarations so this is a workaround
                         {
-                            leftOffset = parseInt(svg[0][0].getBoundingClientRect().x+1);
+                            leftOffset = parseInt(svg[0][0].getBoundingClientRect().x + 1);
                             topOffset = parseInt(svg[0][0].getBoundingClientRect().y);
                         }
                         this.style["fill"] = "#3ca6dc";
                         div.transition()
         	                .duration(200)
         	                .style("opacity", .9);
-        	            div .html(d.band_label+"<br/>|")
-        	                .style("left", (leftOffset + x(d.genomic_coordinates.start+centromereOffset+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
-        	                .style("top", (topOffset-30) + "px");
+        	            div .html(d.band_label + "<br/>|")
+        	                .style("left", (leftOffset + x(d.genomic_coordinates.start + centromereOffset +( d.genomic_coordinates.stop - d.genomic_coordinates.start) / 2) - 2) + "px")
+        	                .style("top", (topOffset - 30) + "px");
         	        })
         	        .on("mouseout", function (d) {
                         this.style["fill"] = "#" + rainbow.colorAt(d.density);
@@ -190,9 +190,9 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
 
                 // draws the outline rect
                 arm.append("rect")
-                    .attr("width", function (d) { return (x(d.end-d.start) - 2); })
+                    .attr("width", function (d) { return (x(d.end - d.start) - 2); })
                     .attr("height", 30)
-                    .attr("transform", function (d) { return "translate(" + (x(d.start+centromereOffset) + 1) + ",1)" })
+                    .attr("transform", function (d) { return "translate(" + (x(d.start + centromereOffset) + 1) + ",1)" })
                     .attr("stroke-width", 2)
                     .attr("stroke", "#111111")
                     .attr("fill", "none");
