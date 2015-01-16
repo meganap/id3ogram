@@ -130,6 +130,7 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
 
                 // remove all old elements and redraw
                 svg.selectAll("*").remove();
+
                 $scope.drawArm('p', pArm, vis.p, 0);
                 // 32 for height to account for 2px stroke on outlines
                 $scope.drawCentromere(x(pmax), x(centromereLength), 32);
@@ -188,11 +189,24 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
             }
 
             $scope.drawCentromere = function (pmax, width, height) {
+                // add hatch pattern for centromere
+                svg.append('pattern')
+                    .attr('id', 'diagonalHatch')
+                    .attr('patternUnits', 'userSpaceOnUse')
+                    .attr('width', 4)
+                    .attr('height', 4)
+                    .append('path')
+                        .attr('d', 'M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2')
+                        .attr('stroke', '#000000')
+                        .attr('stroke-width', 1);
+
+                // make polygon string for centromere
                 var centromerePoly = pmax + ",0, " + (pmax + width / 2) + "," + (height / 2) + ", " + (pmax + width) + ",0, " + (pmax + width) + "," + height + ", " + (pmax + width / 2) + "," + (height / 2) + ", " + pmax + "," + height;
+
                 // draws the centromere polygon
                 svg.append("polygon")
                     .attr("transform", "translate(" + x(pmax) + ",0)" )
-                    .attr("fill", "#000000")
+                    .attr("fill", "url(#diagonalHatch)")
                     .attr("points", centromerePoly);
             }
 
