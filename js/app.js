@@ -37,9 +37,12 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
 
             // init method to set up the data structures, and vis variables
             $scope.init = function () {
-                // set up list of chromosome numbers
+                // set up list of chromosomes
                 for (var i = 1; i < 23; i++)
                     $scope.chromosomes.push(i);
+
+                $scope.chromosomes.push('X');
+                $scope.chromosomes.push('Y');
 
                 // link the header to the current chromosome view
                 $scope.currentChromosome = $scope.chromosomes[0];
