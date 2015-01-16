@@ -112,7 +112,10 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
                 pmin = d3.min(vis.p, function (d) { return d.genomic_coordinates.start });
                 pmax = d3.max(vis.p, function (d) { return d.genomic_coordinates.stop });
 
-                centromereLength = (qmax-pmin) * .05;
+                if(pmax != qmin)
+                    qmin = pmax;
+
+                centromereLength = (qmax - pmin) * .05;
 
                 // set up x axis, rangeRound used to avoid anti-aliasing issues
                 x = d3.scale.linear()
