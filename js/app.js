@@ -116,7 +116,7 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
 
                 // set up x axis, rangeRound used to avoid anti-aliasing issues
                 x = d3.scale.linear()
-                    .rangeRound([0, document.getElementById('vis').offsetWidth]);
+                    .range([0, document.getElementById('vis').offsetWidth]);
                 x.domain([pmin, qmax+centromereLength]);
 
                 // set values for drawing background and outline arm rects
