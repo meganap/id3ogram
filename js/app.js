@@ -148,6 +148,13 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
                 .enter().append("g")
                     .attr("class", armID+"Arm");
 
+                // draws the background rect
+                arm.append("rect")
+                    .attr("width", function (d) { return (x(d.end-d.start) - 2); })
+                    .attr("height", 30)
+                    .attr("transform", function (d) { return "translate(" + (x(d.start+centromereOffset) + 1) + ",1)" })
+                    .attr("fill", "#f3f3f3");
+
                 var armBands = arm.selectAll(".armBand")
                     .data(armBandData);
 
