@@ -40,8 +40,10 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
 
             // init method to set up the data structures, and vis variables
             $scope.init = function() {
-                // link the select box to the chromosome numbers available
-                $scope.chromosomes = Object.keys(dataByCh);
+                // set up list of chromosome numbers
+                for(var i = 1; i < 23; i++)
+                    $scope.chromosomes.push(i);
+
                 // link the header to the current chromosome view
                 $scope.currentChromosome = $scope.chromosomes[0];
 
@@ -56,13 +58,44 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 svg = d3.select("#vis").append("svg")
                     .attr("height", 60);
 
-                $scope.resetCurrentVis();
+                $scope.getBandData();
+            }
+
+            $scope.getBandData = function() {
+                data = {
+                    'fields': [
+                     "arm",
+                     "band_label",
+                     "genomic_coordinates.start",
+                     "genomic_coordinates.stop",
+                     "density"
+                    ],
+                    'filters': [{and: [
+                     ["genomic_coordinates.chromosome", $scope.currentChromosome]
+                    ]}]
+                }
+
+                $http.post(attrs.dataurl, data)
+                    .success(function(data, status, headers, config) {
+                        // this callback will be called asynchronously
+                        // when the response is available
+                    	$scope.info = 'dataset:' + data.dataset;
+                    	$scope.info += '  ID:' + data.dataset_id;
+                    	$scope.info += '  Build:' + data.genome_build;
+
+                        $scope.resetCurrentVis(data.results);
+                    })
+                    .error(function(data, status, headers, config) {
+                        // called asynchronously if an error occurs
+                        // or server returns response with an error status.
+                        $scope.info = 'Failed to load data from SolveBio';
+                    });
             }
 
             // resetCurrentVis method calculates the data and calls methods to
             // draw the arms
-            $scope.resetCurrentVis = function() {
-                var currentData = dataByCh[$scope.currentChromosome];
+            $scope.resetCurrentVis = function(bandData) {
+                var currentData = bandData;
 
                 // reset arm arrays to calculate min/max for current chromosome
                 vis.q = [];
@@ -167,34 +200,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 $scope.resetCurrentVis();
             });
 
-            // load the data and init
-            $http.get(attrs.dataurl).
-            success(function(data, status, headers, config) {
-                // this callback will be called asynchronously
-                // when the response is available
-            	$scope.info += 'dataset:' + data.dataset;
-            	$scope.info += '  ID:' + data.dataset_id;
-            	$scope.info += '  Build:' + data.genome_build;
-
-                data = data.results;
-
-                // separate data by chromosomes
-            	data.forEach(function(d){
-                    var ch = parseInt(d.genomic_coordinates.chromosome);
-
-                     if(!(ch in dataByCh))
-                         dataByCh[ch] = [];
-
-                     dataByCh[ch].push(d);
-                });
-
-                $scope.init();
-            }).
-            error(function(data, status, headers, config) {
-                // called asynchronously if an error occurs
-                // or server returns response with an error status.
-                $scope.info = 'Failed to load data from SolveBio';
-            });
+            $scope.init();
         }
     };
 }]);

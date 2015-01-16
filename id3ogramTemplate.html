@@ -1,7 +1,7 @@
 <div>
     <div class="right">
     	<label>Select Chromosome: </label>
-    	<select ng-model="currentChromosome" ng-options="chromosome for chromosome in chromosomes" ng-change="resetCurrentVis()">
+    	<select ng-model="currentChromosome" ng-options="chromosome for chromosome in chromosomes" ng-change="getBandData()">
     	</select>
     </div>
     <h2>Chromosome {{ currentChromosome }}</h2>
