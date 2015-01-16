@@ -36,7 +36,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             // data for the background/outline arms
             var pArm = [];
             var qArm = [];
-            var centromere = [];
+            var centromereLength = 0;
             var x; // x axis
 
             // init method to set up the data structures, and vis variables
@@ -63,6 +63,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             }
 
             $scope.getBandData = function() {
+                svg.style("opacity", .1)
                 data = {
                     'fields': [
                         "arm",
@@ -112,14 +113,16 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 pmin = d3.min(vis.p, function(d) { return d.genomic_coordinates.start });
                 pmax = d3.max(vis.p, function(d) { return d.genomic_coordinates.stop });
 
+                centromereLength = (qmax-pmin)*.05;
+
                 // set up x axis, rangeRound used to avoid anti-aliasing issues
                 x = d3.scale.linear()
                     .rangeRound([0, document.getElementById('vis').offsetWidth]);
-                x.domain([0, qmax]);
+                x.domain([pmin, qmax+centromereLength]);
 
                 // set values for drawing background and outline arm rects
-                pArm = [{start: 0, end: (pmax + (qmin-pmax)/2) }];
-                qArm = [{start: (pmax + (qmin-pmax)/2), end: qmax }];
+                pArm = [{start: pmin, end: pmax }];
+                qArm = [{start: qmin, end: qmax }];
 
                 minDensity = d3.min($scope.currentBandData, function(d) { return d.density });
                 maxDensity = d3.max($scope.currentBandData, function(d) { return d.density });
@@ -131,12 +134,15 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
 
                 // remove all old elements and redraw
                 svg.selectAll("*").remove();
-                $scope.drawArm('p', pArm, vis.p);
-                $scope.drawArm('q', qArm, vis.q);
+                $scope.drawArm('p', pArm, vis.p, 0);
+                // 32 for height to account for 2px stroke on outlines
+                $scope.drawCentromere(x(pmax), x(centromereLength), 32);
+                $scope.drawArm('q', qArm, vis.q, centromereLength);
+                svg.style("opacity", 1)
             };
 
             // drawArm method uses d3 to do the actual drawing
-            $scope.drawArm = function(armID, armData, armBandData) {
+            $scope.drawArm = function(armID, armData, armBandData, centromereOffset) {
                 var arm = svg.selectAll("."+armID+"Arm")
                     .data(armData)
                 .enter().append("g")
@@ -150,48 +156,48 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                     .attr("class", "armBand")
                     .attr("width", function(d) { return x(d.genomic_coordinates.stop-d.genomic_coordinates.start); })
                     .attr("height", 28)
-                    .attr("transform", function(d) { return "translate(" + x(d.genomic_coordinates.start) + ",1)" })
+                    .attr("transform", function(d) { return "translate(" + x(d.genomic_coordinates.start+centromereOffset) + ",2)" })
                     .style("fill", function(d) { return "#"+rainbow.colorAt(d.density); })
-            	        .on("mouseover", function(d) {
-                            var leftOffset = svg[0][0].offsetLeft;
-                            var topOffset = svg[0][0].offsetTop;
-                            if(isFirefox) // firefox has an issue with the above declarations so this is a workaround
-                            {
-                                leftOffset = parseInt(svg[0][0].getBoundingClientRect().x+1);
-                                topOffset = parseInt(svg[0][0].getBoundingClientRect().y);
-                            }
-                            this.style["fill"] = "#3ca6dc";
-                            div.transition()
-            	                .duration(200)
-            	                .style("opacity", .9);
-            	            div .html(d.band_label+"<br/>|")
-            	                .style("left", (leftOffset + x(d.genomic_coordinates.start+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
-            	                .style("top", (topOffset-30) + "px");
-            	        })
-            	        .on("mouseout", function(d) {
-                            this.style["fill"] = "#" + rainbow.colorAt(d.density);
-            	            div.transition()
-            	                .duration(500)
-                                .style("opacity", 0);
-            	        });
-
-                // //draws the background lightest gray arm rect
-                // arm.append("rect")
-                //     .attr("width", function(d) { return x(d.end-d.start); })
-                //     .attr("height", 30)
-                //     .attr("transform", function(d) { return "translate(" + (x(d.start) + 1) + ",0)" })
-                //     .attr("fill", "#fafafa");
+        	        .on("mouseover", function(d) {
+                        var leftOffset = svg[0][0].offsetLeft;
+                        var topOffset = svg[0][0].offsetTop;
+                        if(isFirefox) // firefox has an issue with the above declarations so this is a workaround
+                        {
+                            leftOffset = parseInt(svg[0][0].getBoundingClientRect().x+1);
+                            topOffset = parseInt(svg[0][0].getBoundingClientRect().y);
+                        }
+                        this.style["fill"] = "#3ca6dc";
+                        div.transition()
+        	                .duration(200)
+        	                .style("opacity", .9);
+        	            div .html(d.band_label+"<br/>|")
+        	                .style("left", (leftOffset + x(d.genomic_coordinates.start+centromereOffset+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
+        	                .style("top", (topOffset-30) + "px");
+        	        })
+        	        .on("mouseout", function(d) {
+                        this.style["fill"] = "#" + rainbow.colorAt(d.density);
+        	            div.transition()
+        	                .duration(500)
+                            .style("opacity", 0);
+        	        });
 
                 // draws the outline rect
                 arm.append("rect")
-                    .attr("rx", 10)
-                    .attr("ry", 10)
                     .attr("width", function(d) { return (x(d.end-d.start) - 2); })
                     .attr("height", 30)
-                    .attr("transform", function(d) { return "translate(" + (x(d.start) + 1) + ",0)" })
+                    .attr("transform", function(d) { return "translate(" + (x(d.start+centromereOffset) + 1) + ",1)" })
                     .attr("stroke-width", 2)
                     .attr("stroke", "#111111")
                     .attr("fill", "none");
+            }
+
+            $scope.drawCentromere = function(pmax, width, height) {
+                var centromerePoly = pmax + ",0, " + (pmax + width/2) + "," + (height/2) + ", " + (pmax+width) + ",0, " + (pmax+width) + "," + height + ", " + (pmax + width/2) + "," + (height/2) + ", " + pmax + "," + height;
+                // draws the centromere polygon
+                svg.append("polygon")
+                    .attr("transform", "translate(" + x(pmax) + ",0)" )
+                    .attr("fill", "#000000")
+                    .attr("points", centromerePoly);
             }
 
             // update the vis on window resize for responsiveness
