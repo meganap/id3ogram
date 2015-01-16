@@ -1,17 +1,13 @@
 var app = angular.module('id3ogramViewer', []);
 
-function id3ogramController($scope) {
-
-}
-
-app.directive('id3ogram', ['$http', '$window', function($http,$window) {
+app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
     return {
         scope: {},
         restrict: 'AE',
         replace: 'true',
         templateUrl: 'id3ogramTemplate.html',
-        link: function($scope, div, attrs) {
-        	// app vars
+        link: function ($scope, div, attrs) {
+            // app vars
             $scope.info = '';
             $scope.chromosomes = [];
             $scope.currentChromosome = null;
@@ -40,9 +36,9 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             var x; // x axis
 
             // init method to set up the data structures, and vis variables
-            $scope.init = function() {
+            $scope.init = function () {
                 // set up list of chromosome numbers
-                for(var i = 1; i < 23; i++)
+                for (var i = 1; i < 23; i++)
                     $scope.chromosomes.push(i);
 
                 // link the header to the current chromosome view
@@ -62,7 +58,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 $scope.getBandData();
             }
 
-            $scope.getBandData = function() {
+            $scope.getBandData = function () {
                 svg.style("opacity", .1)
                 data = {
                     'fields': [
@@ -79,7 +75,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 }
 
                 $http.post(attrs.dataurl, data)
-                    .success(function(data, status, headers, config) {
+                    .success(function (data, status, headers, config) {
                         // this callback will be called asynchronously
                         // when the response is available
                     	$scope.info = 'dataset:' + data.dataset;
@@ -89,7 +85,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                         $scope.currentBandData = data.results
                         $scope.resetCurrentVis();
                     })
-                    .error(function(data, status, headers, config) {
+                    .error(function (data, status, headers, config) {
                         // called asynchronously if an error occurs
                         // or server returns response with an error status.
                         $scope.info = 'Failed to load data from SolveBio';
@@ -98,22 +94,22 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
 
             // resetCurrentVis method calculates the data and calls methods to
             // draw the arms
-            $scope.resetCurrentVis = function() {
+            $scope.resetCurrentVis = function () {
                 // reset arm arrays to calculate min/max for current chromosome
                 vis.q = [];
                 vis.p = [];
 
                 // separate chromosome data by arm
-                $scope.currentBandData.forEach(function(d) {
+                $scope.currentBandData.forEach(function (d) {
                     vis[d.arm].push(d);
                 });
 
-                qmin = d3.min(vis.q, function(d) { return d.genomic_coordinates.start });
-                qmax = d3.max(vis.q, function(d) { return d.genomic_coordinates.stop });
-                pmin = d3.min(vis.p, function(d) { return d.genomic_coordinates.start });
-                pmax = d3.max(vis.p, function(d) { return d.genomic_coordinates.stop });
+                qmin = d3.min(vis.q, function (d) { return d.genomic_coordinates.start });
+                qmax = d3.max(vis.q, function (d) { return d.genomic_coordinates.stop });
+                pmin = d3.min(vis.p, function (d) { return d.genomic_coordinates.start });
+                pmax = d3.max(vis.p, function (d) { return d.genomic_coordinates.stop });
 
-                centromereLength = (qmax-pmin)*.05;
+                centromereLength = (qmax-pmin) * .05;
 
                 // set up x axis, rangeRound used to avoid anti-aliasing issues
                 x = d3.scale.linear()
@@ -124,8 +120,8 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 pArm = [{start: pmin, end: pmax }];
                 qArm = [{start: qmin, end: qmax }];
 
-                minDensity = d3.min($scope.currentBandData, function(d) { return d.density });
-                maxDensity = d3.max($scope.currentBandData, function(d) { return d.density });
+                minDensity = d3.min($scope.currentBandData, function (d) { return d.density });
+                maxDensity = d3.max($scope.currentBandData, function (d) { return d.density });
 
                 rainbow.setNumberRange(minDensity, maxDensity);
 
@@ -142,7 +138,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             };
 
             // drawArm method uses d3 to do the actual drawing
-            $scope.drawArm = function(armID, armData, armBandData, centromereOffset) {
+            $scope.drawArm = function (armID, armData, armBandData, centromereOffset) {
                 var arm = svg.selectAll("."+armID+"Arm")
                     .data(armData)
                 .enter().append("g")
@@ -154,11 +150,11 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 // draws each band
                 armBands.enter().append("rect")
                     .attr("class", "armBand")
-                    .attr("width", function(d) { return x(d.genomic_coordinates.stop-d.genomic_coordinates.start); })
+                    .attr("width", function (d) { return x(d.genomic_coordinates.stop-d.genomic_coordinates.start); })
                     .attr("height", 28)
-                    .attr("transform", function(d) { return "translate(" + x(d.genomic_coordinates.start+centromereOffset) + ",2)" })
-                    .style("fill", function(d) { return "#"+rainbow.colorAt(d.density); })
-        	        .on("mouseover", function(d) {
+                    .attr("transform", function (d) { return "translate(" + x(d.genomic_coordinates.start+centromereOffset) + ",2)" })
+                    .style("fill", function (d) { return "#"+rainbow.colorAt(d.density); })
+        	        .on("mouseover", function (d) {
                         var leftOffset = svg[0][0].offsetLeft;
                         var topOffset = svg[0][0].offsetTop;
                         if(isFirefox) // firefox has an issue with the above declarations so this is a workaround
@@ -174,7 +170,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
         	                .style("left", (leftOffset + x(d.genomic_coordinates.start+centromereOffset+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
         	                .style("top", (topOffset-30) + "px");
         	        })
-        	        .on("mouseout", function(d) {
+        	        .on("mouseout", function (d) {
                         this.style["fill"] = "#" + rainbow.colorAt(d.density);
         	            div.transition()
         	                .duration(500)
@@ -183,16 +179,16 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
 
                 // draws the outline rect
                 arm.append("rect")
-                    .attr("width", function(d) { return (x(d.end-d.start) - 2); })
+                    .attr("width", function (d) { return (x(d.end-d.start) - 2); })
                     .attr("height", 30)
-                    .attr("transform", function(d) { return "translate(" + (x(d.start+centromereOffset) + 1) + ",1)" })
+                    .attr("transform", function (d) { return "translate(" + (x(d.start+centromereOffset) + 1) + ",1)" })
                     .attr("stroke-width", 2)
                     .attr("stroke", "#111111")
                     .attr("fill", "none");
             }
 
-            $scope.drawCentromere = function(pmax, width, height) {
-                var centromerePoly = pmax + ",0, " + (pmax + width/2) + "," + (height/2) + ", " + (pmax+width) + ",0, " + (pmax+width) + "," + height + ", " + (pmax + width/2) + "," + (height/2) + ", " + pmax + "," + height;
+            $scope.drawCentromere = function (pmax, width, height) {
+                var centromerePoly = pmax + ",0, " + (pmax + width / 2) + "," + (height / 2) + ", " + (pmax + width) + ",0, " + (pmax + width) + "," + height + ", " + (pmax + width / 2) + "," + (height / 2) + ", " + pmax + "," + height;
                 // draws the centromere polygon
                 svg.append("polygon")
                     .attr("transform", "translate(" + x(pmax) + ",0)" )
