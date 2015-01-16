@@ -15,7 +15,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             $scope.info = '';
             $scope.chromosomes = [];
             $scope.currentChromosome = null;
-            var dataByCh = {};
+            $scope.currentBandData = null;
 
             // static vis vars
             var rainbow = new Rainbow();
@@ -85,7 +85,8 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                     	$scope.info += '  ID:' + data.dataset_id;
                     	$scope.info += '  Build:' + data.genome_build;
 
-                        $scope.resetCurrentVis(data.results);
+                        $scope.currentBandData = data.results
+                        $scope.resetCurrentVis();
                     })
                     .error(function(data, status, headers, config) {
                         // called asynchronously if an error occurs
@@ -96,15 +97,13 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
 
             // resetCurrentVis method calculates the data and calls methods to
             // draw the arms
-            $scope.resetCurrentVis = function(bandData) {
-                var currentData = bandData;
-
+            $scope.resetCurrentVis = function() {
                 // reset arm arrays to calculate min/max for current chromosome
                 vis.q = [];
                 vis.p = [];
 
                 // separate chromosome data by arm
-                currentData.forEach(function(d) {
+                $scope.currentBandData.forEach(function(d) {
                     vis[d.arm].push(d);
                 });
 
@@ -122,8 +121,8 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 pArm = [{start: 0, end: (pmax + (qmin-pmax)/2) }];
                 qArm = [{start: (pmax + (qmin-pmax)/2), end: qmax }];
 
-                minDensity = d3.min(currentData, function(d) { return d.density });
-                maxDensity = d3.max(currentData, function(d) { return d.density });
+                minDensity = d3.min($scope.currentBandData, function(d) { return d.density });
+                maxDensity = d3.max($scope.currentBandData, function(d) { return d.density });
 
                 rainbow.setNumberRange(minDensity, maxDensity);
 
