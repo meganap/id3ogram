@@ -34,8 +34,8 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             var minDensity = -Infinity;
             var svg; // holds the actual ideogram
             // data for the background/outline arms
-            var pArm = []
-            var qArm = []
+            var pArm = [];
+            var qArm = [];
             var x; // x axis
 
             // init method to set up the data structures, and vis variables
@@ -43,7 +43,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 // link the select box to the chromosome numbers available
                 $scope.chromosomes = Object.keys(dataByCh);
                 // link the header to the current chromosome view
-                $scope.currentChromosome = $scope.chromosomes[0]
+                $scope.currentChromosome = $scope.chromosomes[0];
 
                 rainbow.setSpectrum('#dddddd','#000000');
 
@@ -62,7 +62,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             // resetCurrentVis method calculates the data and calls methods to
             // draw the arms
             $scope.resetCurrentVis = function() {
-                var currentData = dataByCh[$scope.currentChromosome]
+                var currentData = dataByCh[$scope.currentChromosome];
 
                 // reset arm arrays to calculate min/max for current chromosome
                 vis.q = [];
@@ -84,8 +84,8 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                 x.domain([0, qmax]);
 
                 // set values for drawing background and outline arm rects
-                pArm = [{start: 0, end: (pmax + (qmin-pmax)/2) }]
-                qArm = [{start: (pmax + (qmin-pmax)/2), end: qmax }]
+                pArm = [{start: 0, end: (pmax + (qmin-pmax)/2) }];
+                qArm = [{start: (pmax + (qmin-pmax)/2), end: qmax }];
 
                 minDensity = d3.min(currentData, function(d) { return d.density });
                 maxDensity = d3.max(currentData, function(d) { return d.density });
@@ -128,20 +128,20 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
                     .attr("transform", function(d) { return "translate(" + x(d.genomic_coordinates.start) + ",1)" })
                     .style("fill", function(d) { return "#"+rainbow.colorAt(d.density); })
             	        .on("mouseover", function(d) {
-                          var leftOffset = svg[0][0].offsetLeft
-                          var topOffset = svg[0][0].offsetTop
-                          if(isFirefox) // firefox has an issue with the above declarations so this is a workaround
-                          {
-                              leftOffset = parseInt(svg[0][0].getBoundingClientRect().x+1)
-                              topOffset = parseInt(svg[0][0].getBoundingClientRect().y)
-                          }
-                          this.style["fill"] = "#3ca6dc"
-                          div.transition()
-            	              .duration(200)
-            	              .style("opacity", .9);
-            	          div .html(d.band_label+"<br/>|")
-            	              .style("left", (leftOffset + x(d.genomic_coordinates.start+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
-            	              .style("top", (topOffset-30) + "px");
+                            var leftOffset = svg[0][0].offsetLeft;
+                            var topOffset = svg[0][0].offsetTop;
+                            if(isFirefox) // firefox has an issue with the above declarations so this is a workaround
+                            {
+                                leftOffset = parseInt(svg[0][0].getBoundingClientRect().x+1);
+                                topOffset = parseInt(svg[0][0].getBoundingClientRect().y);
+                            }
+                            this.style["fill"] = "#3ca6dc";
+                            div.transition()
+            	                .duration(200)
+            	                .style("opacity", .9);
+            	            div .html(d.band_label+"<br/>|")
+            	                .style("left", (leftOffset + x(d.genomic_coordinates.start+(d.genomic_coordinates.stop-d.genomic_coordinates.start)/2)-2) + "px")
+            	                .style("top", (topOffset-30) + "px");
             	        })
             	        .on("mouseout", function(d) {
                             this.style["fill"] = "#" + rainbow.colorAt(d.density);
@@ -176,7 +176,7 @@ app.directive('id3ogram', ['$http', '$window', function($http,$window) {
             	$scope.info += '  ID:' + data.dataset_id;
             	$scope.info += '  Build:' + data.genome_build;
 
-                data = data.results
+                data = data.results;
 
                 // separate data by chromosomes
             	data.forEach(function(d){
