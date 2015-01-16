@@ -113,7 +113,11 @@ app.directive('id3ogram', ['$http', '$window', function ($http, $window) {
                 pmax = d3.max(vis.p, function (d) { return d.genomic_coordinates.stop });
 
                 if(pmax != qmin)
-                    qmin = pmax;
+                {
+                    var temp = qmin;
+                    qmin -= (qmin - pmax) / 2;
+                    pmax += (temp - pmax) / 2;
+                }
 
                 centromereLength = (qmax - pmin) * .05;
 
